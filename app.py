@@ -13,7 +13,7 @@ st.set_page_config(page_title="Nadhif AI Chat", layout="wide")
 def get_ollama_client():
     if "ollama_client" not in st.session_state:
         # Jika di Streamlit Cloud, pastikan Anda mengisi Secrets dengan OLLAMA_HOST
-        ollama_host = st.secrets.get("OLLAMA_HOST", "http://localhost:11434")
+        ollama_host = st.secrets.get("OLLAMA_HOST", "http://host.docker.internal:11434")
         st.session_state.ollama_client = ollama.Client(host=ollama_host)
     return st.session_state.ollama_client
 
