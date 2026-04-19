@@ -169,4 +169,4 @@ h1, h2, h3 {
 /* Sembunyikan Branding Streamlit */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
+header {background-color: transparent !important;}
