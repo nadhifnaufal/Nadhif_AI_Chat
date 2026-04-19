@@ -8,6 +8,13 @@ import os
 # Konfigurasi dasar halaman Streamlit
 st.set_page_config(page_title="Nadhif AI Chat", layout="wide")
 
+# Inisialisasi klien Ollama. 
+# Menggunakan st.secrets atau environment variable agar host bisa dikonfigurasi saat deployment.
+if "ollama_client" not in st.session_state:
+    ollama_host = st.secrets.get("OLLAMA_HOST", "http://localhost:11434")
+    st.session_state.ollama_client = ollama.Client(host=ollama_host)
+client = st.session_state.ollama_client
+
 def local_css(file_name, theme):
     # Tentukan nilai spesifik tema
     themes = {
@@ -160,7 +167,7 @@ if chat_input or st.session_state.pending_prompt:
             if uploaded_file and use_vision:
                 # Logika analisis gambar menggunakan model LLaVA
                 image_bytes = uploaded_file.getvalue()
-                response = ollama.generate(
+                response = client.generate(
                     model='llava',
                     prompt=prompt,
                     images=[image_bytes],
@@ -173,7 +180,7 @@ if chat_input or st.session_state.pending_prompt:
             else:
                 # Logika chat teks/pemrograman menggunakan model Mistral
                 # Mengirim seluruh riwayat pesan agar model memiliki konteks (memory)
-                response = ollama.chat(
+                response = client.chat(
                     model='mistral',
                     messages=messages,
                     stream=True
