@@ -64,35 +64,6 @@
     font-weight: 400;
 }
 
-/* Menargetkan tombol Streamlit agar berfungsi sebagai Action Cards */
-.card-grid-container [data-testid="stVerticalBlock"] div.stButton > button {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 16px !important;
-    padding: 20px 24px !important;
-    min-height: 100px !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-start !important;
-    text-align: left !important;
-    transition: all 0.2s;
-    cursor: pointer;
-    box-shadow: 0 4px 6px var(--shadow);
-    color: var(--text-primary) !important;
-    font-weight: 600 !important;
-    white-space: pre-wrap !important;
-}
-
-.card-grid-container [data-testid="stVerticalBlock"] div.stButton > button p {
-    color: var(--text-primary) !important;
-}
-
-.card-grid-container [data-testid="stVerticalBlock"] div.stButton > button:hover {
-    border-color: var(--accent-color) !important;
-    background-color: var(--card-hover) !important;
-    transform: translateY(-2px);
-}
-
 /* Gaya Header */
 h1, h2, h3 {
     font-weight: 800;

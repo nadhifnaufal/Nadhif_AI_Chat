@@ -68,9 +68,6 @@ if "current_chat_id" not in st.session_state:
     st.session_state.all_chats[new_id] = []
     st.session_state.current_chat_id = new_id
 
-if "pending_prompt" not in st.session_state:
-    st.session_state.pending_prompt = None
-
 # Alias untuk mempermudah akses ke daftar pesan pada chat yang sedang aktif
 messages = st.session_state.all_chats[st.session_state.current_chat_id]
 
@@ -109,57 +106,36 @@ with st.sidebar:
     st.divider()
     st.info("Current Models:\n- Text: Mistral\n- Vision: LLaVA")
 
-# Main Content Area Logic
+# --- LOGIKA PEMROSESAN INPUT (Dipindahkan ke atas agar UI sinkron) ---
+chat_input = st.chat_input("Summarize the latest...")
+active_prompt = None
+
+if chat_input:
+    active_prompt = chat_input
+
+if active_prompt:
+    # Simpan pesan pengguna ke dalam riwayat sebelum tampilan di-render
+    messages.append({"role": "user", "content": active_prompt})
+
+# Logika Area Konten Utama
 if not messages:
     # Layar Selamat Datang berdasarkan Layout_UI_1.png
     st.markdown("""
         <div class="welcome-container">
             <h1 class="welcome-title">Welcome to Nadhif AI Chat</h1>
-            <p class="welcome-subtitle">Ask anything, write code, or analyze images. <br>Select a task below to get started.</p>
+            <p class="welcome-subtitle">Ask anything, write code, or analyze images.<br>Start a conversation below to begin.</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # Menampilkan Action Cards (Tombol Tugas Cepat)
-    st.markdown('<div class="card-grid-container">', unsafe_allow_html=True)
-    c1, c2 = st.columns(2, gap="medium")
-    with c1:
-        if st.button("📝 Tulis salinan pemasaran\nBuat konten konversi tinggi", use_container_width=True, key="btn_copy"):
-             st.session_state.pending_prompt = "Tulis salinan pemasaran untuk alat produktivitas AI baru."
-             st.rerun()
-        if st.button("👤 Buat persona pengguna\nDesain profil pelanggan ideal", use_container_width=True, key="btn_avatar"):
-             st.session_state.pending_prompt = "Bantu saya mendesain persona pengguna untuk pengembang perangkat lunak."
-             st.rerun()
-    with c2:
-        if st.button("🪄 Deskripsi gambar\nBuat prompt untuk seni AI", use_container_width=True, key="btn_img"):
-             st.session_state.pending_prompt = "Buat deskripsi gambar detail untuk generator seni AI bertema futuristik."
-             st.rerun()
-        if st.button("💻 Tulis kode Python\nBangun skrip dan fungsi", use_container_width=True, key="btn_code"):
-             st.session_state.pending_prompt = "Tulis skrip Python untuk melakukan web scraping dan menyimpannya ke CSV."
-             st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
 else:
     # Header Chat Standar ketika riwayat tersedia
     st.markdown("<h3 style='margin-bottom: 2rem;'>AI Chat</h3>", unsafe_allow_html=True)
-    # Menampilkan riwayat pesan chat ke layar
     for message in messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# Logika Input Chat
-chat_input = st.chat_input("Summarize the latest...")
-
-if chat_input or st.session_state.pending_prompt:
-    prompt = chat_input if chat_input else st.session_state.pending_prompt
-    st.session_state.pending_prompt = None # Reset setelah menangkap input
-    
-    # Menampilkan pesan pengguna di antarmuka
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Menyimpan pesan pengguna ke dalam riwayat
-    messages.append({"role": "user", "content": prompt})
-
+# Jalankan asisten jika ada prompt baru yang masuk
+if active_prompt:
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
         
@@ -181,7 +157,7 @@ if chat_input or st.session_state.pending_prompt:
                 image_bytes = uploaded_file.getvalue()
                 response = ollama.generate(
                     model='llava',
-                    prompt=prompt,
+                    prompt=active_prompt,
                     images=[image_bytes],
                     stream=True
                 )
