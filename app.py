@@ -10,10 +10,24 @@ st.set_page_config(page_title="Nadhif AI Chat", layout="wide")
 
 # Inisialisasi klien Ollama. 
 # Menggunakan st.secrets atau environment variable agar host bisa dikonfigurasi saat deployment.
-if "ollama_client" not in st.session_state:
-    ollama_host = st.secrets.get("OLLAMA_HOST", "http://localhost:11434")
-    st.session_state.ollama_client = ollama.Client(host=ollama_host)
-client = st.session_state.ollama_client
+def get_ollama_client():
+    if "ollama_client" not in st.session_state:
+        # Jika di Streamlit Cloud, pastikan Anda mengisi Secrets dengan OLLAMA_HOST
+        ollama_host = st.secrets.get("OLLAMA_HOST", "http://localhost:11434")
+        st.session_state.ollama_client = ollama.Client(host=ollama_host)
+    return st.session_state.ollama_client
+
+client = get_ollama_client()
+
+def check_connection():
+    try:
+        # Mencoba list model untuk verifikasi koneksi
+        client.list()
+        return True
+    except Exception:
+        return False
+
+is_connected = check_connection()
 
 def local_css(file_name, theme):
     # Tentukan nilai spesifik tema
@@ -114,7 +128,13 @@ with st.sidebar:
         use_vision = st.checkbox("Gunakan Analisis Gambar", value=True)
 
     st.divider()
-    st.info("Current Models:\n- Text: Mistral\n- Vision: LLaVA")
+    # Indikator status koneksi
+    if is_connected:
+        st.success("✅ Terhubung ke Ollama")
+        st.info("Current Models:\n- Text: Mistral\n- Vision: LLaVA")
+    else:
+        st.error("❌ Terputus dari Ollama")
+        st.warning(f"Host: {client._client.base_url}")
 
 # Main Content Area Logic
 if not messages:
