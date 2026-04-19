@@ -8,27 +8,6 @@ import os
 # Konfigurasi dasar halaman Streamlit
 st.set_page_config(page_title="Nadhif AI Chat", layout="wide")
 
-# Inisialisasi klien Ollama. 
-# Menggunakan st.secrets atau environment variable agar host bisa dikonfigurasi saat deployment.
-def get_ollama_client():
-    if "ollama_client" not in st.session_state:
-        # Jika di Streamlit Cloud, pastikan Anda mengisi Secrets dengan OLLAMA_HOST
-        ollama_host = st.secrets.get("OLLAMA_HOST", "http://host.docker.internal:11434")
-        st.session_state.ollama_client = ollama.Client(host=ollama_host)
-    return st.session_state.ollama_client
-
-client = get_ollama_client()
-
-def check_connection():
-    try:
-        # Mencoba list model untuk verifikasi koneksi
-        client.list()
-        return True
-    except Exception:
-        return False
-
-is_connected = check_connection()
-
 def local_css(file_name, theme):
     # Tentukan nilai spesifik tema
     themes = {
@@ -55,7 +34,7 @@ def local_css(file_name, theme):
         --bg-primary: {val['bg_primary']}; --bg-secondary: {val['bg_secondary']};
         --text-primary: {val['text_primary']}; --text-secondary: {val['text_secondary']};
         --border-color: {val['border_color']}; --card-bg: {val['card_bg']};
-        --card-hover: {val['card_hover']}; --accent_color: {val['accent_color']};
+        --card-hover: {val['card_hover']}; --accent-color: {val['accent_color']};
         --input-bg: {val['input_bg']}; --shadow: {val['shadow']};
     }}
     """
@@ -128,13 +107,7 @@ with st.sidebar:
         use_vision = st.checkbox("Gunakan Analisis Gambar", value=True)
 
     st.divider()
-    # Indikator status koneksi
-    if is_connected:
-        st.success("✅ Terhubung ke Ollama")
-        st.info("Current Models:\n- Text: Mistral\n- Vision: LLaVA")
-    else:
-        st.error("❌ Terputus dari Ollama")
-        st.warning(f"Host: {client._client.base_url}")
+    st.info("Current Models:\n- Text: Mistral\n- Vision: LLaVA")
 
 # Main Content Area Logic
 if not messages:
@@ -145,6 +118,25 @@ if not messages:
             <p class="welcome-subtitle">Ask anything, write code, or analyze images. <br>Select a task below to get started.</p>
         </div>
     """, unsafe_allow_html=True)
+
+    # Menampilkan Action Cards (Tombol Tugas Cepat)
+    st.markdown('<div class="card-grid-container">', unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="medium")
+    with c1:
+        if st.button("📝 Tulis salinan pemasaran\nBuat konten konversi tinggi", use_container_width=True, key="btn_copy"):
+             st.session_state.pending_prompt = "Tulis salinan pemasaran untuk alat produktivitas AI baru."
+             st.rerun()
+        if st.button("👤 Buat persona pengguna\nDesain profil pelanggan ideal", use_container_width=True, key="btn_avatar"):
+             st.session_state.pending_prompt = "Bantu saya mendesain persona pengguna untuk pengembang perangkat lunak."
+             st.rerun()
+    with c2:
+        if st.button("🪄 Deskripsi gambar\nBuat prompt untuk seni AI", use_container_width=True, key="btn_img"):
+             st.session_state.pending_prompt = "Buat deskripsi gambar detail untuk generator seni AI bertema futuristik."
+             st.rerun()
+        if st.button("💻 Tulis kode Python\nBangun skrip dan fungsi", use_container_width=True, key="btn_code"):
+             st.session_state.pending_prompt = "Tulis skrip Python untuk melakukan web scraping dan menyimpannya ke CSV."
+             st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     
 else:
     # Header Chat Standar ketika riwayat tersedia
@@ -187,7 +179,7 @@ if chat_input or st.session_state.pending_prompt:
             if uploaded_file and use_vision:
                 # Logika analisis gambar menggunakan model LLaVA
                 image_bytes = uploaded_file.getvalue()
-                response = client.generate(
+                response = ollama.generate(
                     model='llava',
                     prompt=prompt,
                     images=[image_bytes],
@@ -200,7 +192,7 @@ if chat_input or st.session_state.pending_prompt:
             else:
                 # Logika chat teks/pemrograman menggunakan model Mistral
                 # Mengirim seluruh riwayat pesan agar model memiliki konteks (memory)
-                response = client.chat(
+                response = ollama.chat(
                     model='mistral',
                     messages=messages,
                     stream=True
