@@ -1,5 +1,5 @@
-streamlit
-ollama
-Pillow
-langchain
-langchain-ollama
+ollama==0.6.1
+pillow==12.2.0
+streamlit==1.56.0
+langchain==1.2.15
+langchain-ollama==1.1.0
